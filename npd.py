@@ -72,7 +72,7 @@ class Window(QMainWindow):
 
     def open(self):
         fname, _ = QFileDialog.getOpenFileName(self, 'Open')
-        if fname:
+        if fname is not None:
             self.image_a = cv2.imread(fname, cv2.IMREAD_GRAYSCALE)
             for widget in (self.kernel_blur,
                            self.kernel_tophat,
@@ -82,29 +82,42 @@ class Window(QMainWindow):
 
     def save(self):
         fname, _ = QFileDialog.getSaveFileName(self, 'Save', 'output.png')
-        if fname:
+        if fname is not None:
             cv2.imwrite(fname, self.image_b)
 
     def refresh(self):
         mask = self.image_a
         mask = cv2.blur(
-            mask, (self.kernel_blur.value(), self.kernel_blur.value())
+            mask,
+            (self.kernel_blur.value(),
+             self.kernel_blur.value())
         )
         mask = cv2.morphologyEx(
-            mask, cv2.MORPH_TOPHAT,
-            cv2.getStructuringElement(cv2.MORPH_RECT,
-                                      (self.kernel_tophat.value(),
-                                       self.kernel_tophat.value()))
+            mask,
+            cv2.MORPH_TOPHAT,
+            cv2.getStructuringElement(
+                cv2.MORPH_RECT,
+                (self.kernel_tophat.value(),
+                 self.kernel_tophat.value()),
+            )
         )
         _, mask = cv2.threshold(
-            mask, self.threshold.value(), 255, cv2.THRESH_BINARY
+            mask,
+            self.threshold.value(),
+            255,
+            cv2.THRESH_BINARY
         )
-        _, cnts, _ = cv2.findContours(
-            mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+        _, contours, _ = cv2.findContours(
+            mask,
+            cv2.RETR_LIST,
+            cv2.CHAIN_APPROX_SIMPLE,
         )
         self.image_b = cv2.drawContours(
             cv2.cvtColor(self.image_a, cv2.COLOR_GRAY2RGB),
-            cnts, -1, (0, 255, 0), 2
+            contours,
+            -1,
+            (0, 255, 0),
+            2,
         )
         self.action_save.setEnabled(True)
         self.centralWidget().widget().setPixmap(QPixmap.fromImage(QImage(
@@ -115,11 +128,11 @@ class Window(QMainWindow):
             QImage.Format_RGB888,
         )))
         self.centralWidget().widget().adjustSize()
-        msg = f'{len(cnts)} particles detected.'
-        if cnts:
-            avg = int(sum(map(cv2.contourArea, cnts)) // len(cnts))
-            msg += f' Average size: {avg}px.'
-        self.statusBar().showMessage(msg)
+        message = f'{len(contours)} particles detected.'
+        if contours:
+            avg = int(sum(map(cv2.contourArea, contours)) // len(contours))
+            message += f' Average size: {avg}px.'
+        self.statusBar().showMessage(message)
 
 
 if __name__ == '__main__':
