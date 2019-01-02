@@ -1,7 +1,7 @@
 # Nanoparticle Detector
 
 ```sh
-$ pip3 install -r requirements.txt
-$ pyinstaller -y -F npd.py
+$ python3 -m pip install -r requirements.txt
+$ python3 -m PyInstaller -y -w -F npd.py
 $ ./dist/npd
 ```
